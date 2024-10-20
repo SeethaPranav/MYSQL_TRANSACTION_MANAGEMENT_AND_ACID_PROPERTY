@@ -32,12 +32,15 @@ START TRANSACTION;
 SET SQL_SAFE_UPDATES = 0;
 
 -- Deduct from Alice's account
+
 UPDATE accounts SET balance = balance - 100 WHERE account_name = 'Alice';
 
 -- Add to Bob's account
+
 UPDATE accounts SET balance = balance + 100 WHERE account_name = 'Bob';
 
 -- Log the transaction
+
 INSERT INTO transactions (from_account, to_account, amount) 
 VALUES ((SELECT account_id FROM accounts WHERE account_name = 'Alice'),
         (SELECT account_id FROM accounts WHERE account_name = 'Bob'), 
@@ -67,6 +70,7 @@ BEGIN
     DECLARE from_balance DECIMAL(10, 2);
     
     -- Get account IDs and balance
+    
     SELECT account_id, balance INTO from_account_id, from_balance
     FROM accounts WHERE account_name = from_account_name FOR UPDATE;
 
@@ -74,25 +78,38 @@ BEGIN
     FROM accounts WHERE account_name = to_account_name;
 
     -- Check if sufficient balance exists
+    
     IF from_balance >= transfer_amount THEN
+    
         -- Start transaction
+        
         START TRANSACTION;
 
         -- Update balances
+        
         UPDATE accounts SET balance = balance - transfer_amount WHERE account_id = from_account_id;
+        
         UPDATE accounts SET balance = balance + transfer_amount WHERE account_id = to_account_id;
 
         -- Log the transaction
+        
         INSERT INTO transactions (from_account, to_account, amount)
         VALUES (from_account_id, to_account_id, transfer_amount);
 
         -- Commit the transaction
+        
         COMMIT;
+        
     ELSE
+    
         -- Rollback if insufficient funds
+        
         ROLLBACK;
+        
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Insufficient funds';
+        
     END IF;
+    
 END $$
 
 DELIMITER ;
@@ -100,6 +117,7 @@ DELIMITER ;
 CALL transfer_money('Alice', 'Bob', 100.00);
 
 SELECT * FROM accounts;
+
 SELECT * FROM transactions;
 
 ![transaction2](https://github.com/user-attachments/assets/7b02581a-0ed5-47b8-aa1c-31d5b0b682e4)
